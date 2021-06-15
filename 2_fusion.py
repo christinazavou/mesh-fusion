@@ -5,6 +5,7 @@ from scipy import ndimage
 import common
 import argparse
 import ntpath
+import cv2
 
 # Import shipped libraries.
 import librender
@@ -92,7 +93,8 @@ class Fusion:
 
         files = []
         for filename in os.listdir(directory):
-            files.append(os.path.normpath(os.path.join(directory, filename)))
+            if os.path.isfile(os.path.join(directory, filename)):
+                files.append(os.path.normpath(os.path.join(directory, filename)))
 
         return files
 
@@ -246,6 +248,11 @@ class Fusion:
 
             depth_file = os.path.join(self.options.depth_dir, os.path.basename(filepath) + '.h5')
             common.write_hdf5(depth_file, np.array(depths))
+
+            # depth images i.e. an example is 48x48 where every x and y pixel have depth information.
+            for view_idx, depth_img in enumerate(depths):
+                os.makedirs(os.path.join(self.options.depth_dir, os.path.basename(filepath)), exist_ok=True)
+                cv2.imwrite(os.path.join(self.options.depth_dir, os.path.basename(filepath), f'{view_idx}.png'), depth_img*50)
             print('[Data] wrote %s (%f seconds)' % (depth_file, timer.elapsed()))
 
     def run_fuse(self):
