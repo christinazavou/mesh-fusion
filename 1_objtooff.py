@@ -19,8 +19,8 @@ def parse_simple_obj_file(obj_file):
     return vertices, faces
 
 
-in_dir = "/media/graphicslab/BigData/zavou/ANNFASS_CODE/mesh-fusion/examples/0_buildnet"
-out_dir = "/media/graphicslab/BigData/zavou/ANNFASS_CODE/mesh-fusion/examples/1_buildnet"
+in_dir = "/media/graphicslab/BigData/zavou/ANNFASS_CODE/mesh-fusion/examples/0_planes"
+out_dir = "/media/graphicslab/BigData/zavou/ANNFASS_CODE/mesh-fusion/examples/1_planes"
 for in_file in os.listdir(in_dir):
     v, f = parse_simple_obj_file(os.path.join(in_dir, in_file))
     f = f.astype(int)

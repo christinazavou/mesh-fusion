@@ -6,6 +6,7 @@ import common
 import argparse
 import ntpath
 import cv2
+import pickle
 
 # Import shipped libraries.
 import librender
@@ -225,6 +226,8 @@ class Fusion:
             self.run_render()
         elif self.options.mode == 'fuse':
             self.run_fuse()
+        elif self.options.mode == 'export_fused_for_decorgan':
+            self.export_fused_for_decorgan()
         else:
             print('Invalid model, choose render or fuse.')
             exit()
@@ -285,6 +288,35 @@ class Fusion:
             off_file = os.path.join(self.options.out_dir, ntpath.basename(filepath)[:-3])
             libmcubes.export_off(vertices, triangles, off_file)
             print('[Data] wrote %s (%f seconds)' % (off_file, timer.elapsed()))
+
+    def export_fused_for_decorgan(self):
+
+        assert os.path.exists(self.options.depth_dir)
+        common.makedir(self.options.out_dir)
+
+        files = self.read_directory(self.options.depth_dir)
+        timer = common.Timer()
+        Rs = self.get_views()
+
+        for filepath in files:
+
+            # As rendering might be slower, we wait for rendering to finish.
+            # This allows to run rendering and fusing in parallel (more or less).
+
+            depths = common.read_hdf5(filepath)
+
+            timer.reset()
+            tsdf = self.fusion(depths, Rs)
+            tsdf = tsdf[0]
+
+            almost_zero_indices = np.where(-1e-4 < tsdf) and np.where(tsdf < 1e-4)
+            tsdf[almost_zero_indices] = 0.
+
+            out_file = os.path.join(self.options.out_dir, ntpath.basename(filepath)[:-3] + ".pkl")
+            with open(out_file, "wb") as fout:
+                pickle.dump(tsdf, fout)
+            print('[Data] wrote %s (%f seconds)' % (out_file, timer.elapsed()))
+
 
 if __name__ == '__main__':
     app = Fusion()
